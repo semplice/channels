@@ -1,0 +1,3 @@
+[submodule "libchannels_master"]
+	path = libchannels_master
+	url = git@github.com:semplice/libchannels.git

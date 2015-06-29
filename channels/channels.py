@@ -137,3 +137,45 @@ class Channels:
 			return {}
 		
 		return {detail:discovery.cache[channel]["channel"][detail] for detail in details if detail in discovery.cache[channel]["channel"]}
+	
+	@channels.actions.action(
+		command="get-dependencies",
+		help="Prints the dependencies of the given channel",
+		cli_output="newline",
+		in_signature="s",
+		out_signature="as"
+	)
+	def GetDependencies(self, channel):
+		"""
+		Returns the dependencies of the given channel.
+		"""
+		
+		return discovery.cache[channel].get_dependencies() if channel in discovery.cache else []
+	
+	@channels.actions.action(
+		command="get-conflicts",
+		help="Prints the conflicts of the given channel",
+		cli_output="newline",
+		in_signature="s",
+		out_signature="as"
+	)
+	def GetConflicts(self, channel):
+		"""
+		Returns the conflicts of the given channel.
+		"""
+		
+		return discovery.cache[channel].get_conflicts() if channel in discovery.cache else []
+	
+	@channels.actions.action(
+		command="get-providers",
+		help="Prints the providers the given channel provides",
+		cli_output="newline",
+		in_signature="s",
+		out_signature="as"
+	)
+	def GetProviders(self, channel):
+		"""
+		Returns the providers the given channel provides.
+		"""
+		
+		return discovery.cache[channel].get_providers() if channel in discovery.cache else []

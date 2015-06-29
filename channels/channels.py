@@ -22,7 +22,7 @@
 import dbus.service
 from channels.objects import BaseObject
 
-from channels.common import discovery, actions
+from channels.common import CURRENT_HANDLER, discovery, actions
 
 import channels.actions
 
@@ -99,7 +99,9 @@ class Channels:
 		"""
 		
 		return sorted([
-			"%s%s" % (channel, " (enabled)" if obj.enabled else "")
+			channel if CURRENT_HANDLER == "DBus" else (
+				"%s%s" % (channel, " (enabled)" if obj.enabled else "")
+			)
 			for channel, obj in discovery.cache.items()
 			if not channel.endswith(".provider")
 		])

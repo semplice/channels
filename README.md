@@ -59,10 +59,10 @@ For example, to list every available channel:
 	   array [
 		  string "jessie"
 		  string "sample"
-		  string "semplice-current (enabled)"
+		  string "semplice-current"
 		  string "semplice-devel"
 		  string "semplice-jessie"
-		  string "sid (enabled)"
+		  string "sid"
 	   ]
 	g7@meddle:~/semplice/channels/channels$ 
 

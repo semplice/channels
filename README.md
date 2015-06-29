@@ -36,9 +36,9 @@ For example, to list every available channel:
 
 ...and to query the status of one specific channel:
 
-	g7@meddle:~/semplice/channels/channels$ channels query-enabled semplice-current
+	g7@meddle:~/semplice/channels/channels$ channels get-enabled semplice-current
 	True
-	g7@meddle:~/semplice/channels/channels$ channels query-enabled semplice-jessie
+	g7@meddle:~/semplice/channels/channels$ channels get-enabled semplice-jessie
 	False
 	g7@meddle:~/semplice/channels/channels$ 
 
@@ -68,10 +68,10 @@ For example, to list every available channel:
 
 ...and to query the status of one specific channel:
 
-	g7@meddle:~/semplice/channels/channels$ dbus-send --system --dest="org.semplicelinux.channels" --print-reply /org/semplicelinux/channels/channels org.semplicelinux.channels.channels.QueryEnabled string:"semplice-current"
+	g7@meddle:~/semplice/channels/channels$ dbus-send --system --dest="org.semplicelinux.channels" --print-reply /org/semplicelinux/channels/channels org.semplicelinux.channels.channels.GetEnabled string:"semplice-current"
 	method return sender=:1.1192 -> dest=:1.1194 reply_serial=2
 	   boolean true
-	g7@meddle:~/semplice/channels/channels$ dbus-send --system --dest="org.semplicelinux.channels" --print-reply /org/semplicelinux/channels/channels org.semplicelinux.channels.channels.QueryEnabled string:"semplice-jessie"
+	g7@meddle:~/semplice/channels/channels$ dbus-send --system --dest="org.semplicelinux.channels" --print-reply /org/semplicelinux/channels/channels org.semplicelinux.channels.channels.GetEnabled string:"semplice-jessie"
 	method return sender=:1.1192 -> dest=:1.1195 reply_serial=2
 	   boolean false
 	g7@meddle:~/semplice/channels/channels$ 

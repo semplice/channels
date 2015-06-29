@@ -107,13 +107,13 @@ class Channels:
 		])
 	
 	@channels.actions.action(
-		command="query-enabled",
-		help="Returns \"True\" if the given channel is enabled, \"False\" otherwise.",
+		command="get-enabled",
+		help="Returns \"True\" if the given channel is enabled, \"False\" otherwise",
 		cli_output="print",
 		in_signature="s",
 		out_signature="b"
 	)
-	def QueryEnabled(self, channel):
+	def GetEnabled(self, channel):
 		"""
 		Returns True if the given channel is enabled, False otherwise.
 		"""
@@ -121,14 +121,14 @@ class Channels:
 		return discovery.cache[channel].enabled if channel in discovery.cache and not channel.endswith(".provider") else False
 	
 	@channels.actions.action(
-		command="query-details",
+		command="get-details",
 		help="Returns the requested details.",
 		cli_output="keyvalue",
 		cli_group_last=True,
 		in_signature="sas",
 		out_signature="a{ss}",
 	)
-	def QueryDetails(self, channel, details):
+	def GetDetails(self, channel, details):
 		"""
 		Returns the requested details.
 		"""

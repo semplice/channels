@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.semplicelinux.channels
+Exec=/usr/share/channels/channels-service.py
+User=root

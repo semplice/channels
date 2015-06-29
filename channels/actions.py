@@ -35,7 +35,8 @@ def action(
 	dbus_visible=True, # False to hide on DBus
 	command=None, # None disables the method on cli handler
 	help=None, # Help for the cli handler
-	cli_output=None, # How to parse the output on the cli handler ("newline", "print", None),
+	cli_output=None, # How to parse the output on the cli handler ("newline", "print", None)
+	cli_group_last=False, # If True, the remaining args will be grouped in one (like *args does)
 	in_signature="", # DBus in_signature
 	out_signature="", # DBus out_signature
 ):
@@ -92,6 +93,7 @@ def action(
 		# This should work only on CPython
 		wrapper.__actionargs__ = [x for x in obj.__code__.co_varnames[:obj.__code__.co_argcount] if not x in ["self",]]
 
+		wrapper.__grouplast__ = cli_group_last
 		wrapper.__command__ = command
 		wrapper.__commandhelp__ = help
 		

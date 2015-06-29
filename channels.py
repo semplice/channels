@@ -77,7 +77,22 @@ def execute_action(info):
 		members = {x.__command__:x for x in channels.common.get_class_actions(mod.__class__)}
 		
 		if info[0] in members:
-			getattr(mod, members[info[0]].__name__)(*info[1:] if len(info) > 1 else [])
+			x = members[info[0]]
+			getattr(mod, x.__name__)(
+				*(
+					(
+						# If __grouplast__ is True, we should group the last items
+						# in a single list.
+						# This is the same as doing something like:
+						#   def Action(self, arg1, arg2, *args)
+						# (supplying "action arg1 arg2 arg3 arg4" will group arg3 and arg4 in a list),
+						# but in a way that works too on DBus (it's not possible to use *args in dbus-python).
+						info[:len(x.__actionargs__)-1] + [info[len(x.__actionargs__):]]
+						if x.__grouplast__ else info[1:] # Otherwise, business as usual.
+					)
+					if len(info) > 1 else []
+				)
+			)
 			
 			return True
 	

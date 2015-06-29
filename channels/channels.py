@@ -121,6 +121,20 @@ class Channels:
 		return discovery.cache[channel].enabled if channel in discovery.cache and not channel.endswith(".provider") else False
 	
 	@channels.actions.action(
+		command="get-component-enabled",
+		help="Prints \"True\" if the given component of the channel is enabled, \"False\" otherwise",
+		cli_output="print",
+		in_signature="ss",
+		out_signature="b"
+	)
+	def GetComponentEnabled(self, channel, component):
+		"""
+		Returns True if the given component of the channel is enabled, False otherwise.
+		"""
+		
+		return discovery.cache[channel].is_component_enabled(component) if channel in discovery.cache else False
+	
+	@channels.actions.action(
 		command="get-details",
 		help="Returns the requested details.",
 		cli_output="keyvalue",

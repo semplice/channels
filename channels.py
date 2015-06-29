@@ -87,7 +87,7 @@ def execute_action(info):
 						#   def Action(self, arg1, arg2, *args)
 						# (supplying "action arg1 arg2 arg3 arg4" will group arg3 and arg4 in a list),
 						# but in a way that works too on DBus (it's not possible to use *args in dbus-python).
-						info[:len(x.__actionargs__)-1] + [info[len(x.__actionargs__):]]
+						info[1:len(x.__actionargs__)] + [info[len(x.__actionargs__):]]
 						if x.__grouplast__ else info[1:] # Otherwise, business as usual.
 					)
 					if len(info) > 1 else []

@@ -83,6 +83,9 @@ def action(
 					print(result)
 				elif cli_output == "newline":
 					print("\n".join(result))
+				elif cli_output == "keyvalue":
+					for key, value in result.items():
+						print("%s: %s" % (key, value))
 			else:
 				return result
 		

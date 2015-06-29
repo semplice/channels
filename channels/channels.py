@@ -119,3 +119,21 @@ class Channels:
 		"""
 		
 		return discovery.cache[channel].enabled if channel in discovery.cache and not channel.endswith(".provider") else False
+	
+	@channels.actions.action(
+		command="query-details",
+		help="Returns the requested details.",
+		cli_output="keyvalue",
+		cli_group_last=True,
+		in_signature="sas",
+		out_signature="a{ss}",
+	)
+	def QueryDetails(self, channel, details):
+		"""
+		Returns the requested details.
+		"""
+		
+		if not channel in discovery.cache or channel.endswith(".provider"):
+			return {}
+		
+		return {detail:discovery.cache[channel]["channel"][detail] for detail in details if detail in discovery.cache[channel]["channel"]}

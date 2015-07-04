@@ -98,7 +98,6 @@ def action(
 		
 		# Wrap around outside_timeout if on DBus
 		if CURRENT_HANDLER == "DBus":
-			unstripped_varnames = obj.__code__.co_varnames[:obj.__code__.co_argcount]
 			obj = outside_timeout(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,

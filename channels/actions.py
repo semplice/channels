@@ -23,11 +23,12 @@ from channels.common import CURRENT_HANDLER, error
 
 if CURRENT_HANDLER == "DBus":
 	from channels.objects import BaseObject
+	from channels.dbus_common import is_authorized
 	outside_timeout = BaseObject.outside_timeout
-else:
-	outside_timeout = None
 
 import os
+
+import types
 
 def action(
 	root_required=False, # True to require additional privilegies
@@ -45,6 +46,43 @@ def action(
 	Modifies the method in order to include settings for
 	the action handler.
 	"""
+	
+	def create_dbus_fixed_method(obj):
+		"""
+		When polkit authentication is required, the is_authorized() method
+		requires both the sender and the connection objects, which aren't specified
+		in the action.
+		
+		This function creates a clone of the supplied method with the sender
+		and connection requirement.
+		
+		The authentication is handled transparently by this decorator -- actions
+		should not attempt to manually verify if the sender is authenticated.
+		"""
+		
+		return types.FunctionType(
+			types.CodeType(
+				obj.__code__.co_argcount + 2, # argcount of obj + sender and connection
+				obj.__code__.co_kwonlyargcount,
+				obj.__code__.co_nlocals,
+				obj.__code__.co_stacksize,
+				obj.__code__.co_flags,
+				obj.__code__.co_code,
+				obj.__code__.co_consts,
+				obj.__code__.co_names,
+				tuple(list(obj.__code__.co_varnames[:obj.__code__.co_argcount]) + ["sender", "connection"]),
+				obj.__code__.co_filename,
+				obj.__code__.co_name,
+				obj.__code__.co_firstlineno,
+				obj.__code__.co_lnotab,
+				obj.__code__.co_freevars,
+				obj.__code__.co_cellvars
+			),
+			obj.__globals__,
+			obj.__name__,
+			obj.__defaults__,
+			obj.__closure__
+		)
 			
 	def decorator(obj):
 		"""
@@ -60,11 +98,14 @@ def action(
 		
 		# Wrap around outside_timeout if on DBus
 		if CURRENT_HANDLER == "DBus":
+			unstripped_varnames = obj.__code__.co_varnames[:obj.__code__.co_argcount]
 			obj = outside_timeout(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,
-				out_signature=out_signature
-			)(obj) 
+				out_signature=out_signature,
+				sender_keyword="sender" if polkit_privilege else None,
+				connection_keyword="connection" if polkit_privilege else None
+			)(create_dbus_fixed_method(obj) if polkit_privilege else obj)
 
 		def wrapper(*args, **kwargs):
 			"""
@@ -75,6 +116,15 @@ def action(
 				# Check for root
 				if not os.geteuid() == 0:
 					error("This action is available only for privileged users.")
+			elif CURRENT_HANDLER == "DBus" and polkit_privilege and not is_authorized(
+				# We assume that both the sender and the connection are in kwargs
+				kwargs["sender"],
+				kwargs["connection"],
+				polkit_privilege,
+				True # user interaction
+			):
+				# No way
+				raise Exception("Not authorized")
 			
 			result = obj(*args, **kwargs)
 			
@@ -94,7 +144,7 @@ def action(
 		wrapper.__dict__.update(obj.__dict__)
 
 		# This should work only on CPython
-		wrapper.__actionargs__ = [x for x in obj.__code__.co_varnames[:obj.__code__.co_argcount] if not x in ["self",]]
+		wrapper.__actionargs__ = [x for x in obj.__code__.co_varnames[:obj.__code__.co_argcount] if not x in ["self", "sender", "connection"]]
 
 		wrapper.__grouplast__ = cli_group_last
 		wrapper.__command__ = command

@@ -19,7 +19,7 @@
 #    Eugenio "g7" Paolantonio <me@medesimo.eu>
 #
 
-from channels.common import discovery, actions
+from channels.common import CURRENT_HANDLER, discovery, actions
 
 import channels.actions
 
@@ -71,7 +71,9 @@ class Providers:
 		if not provider.endswith(".provider"): provider += ".provider"
 		
 		return sorted([
-			"%s%s" % (channel, " (enabled)" if obj.enabled else "")
+			channel if CURRENT_HANDLER == "DBus" else (
+				"%s%s" % (channel, " (enabled)" if obj.enabled else "")
+			)
 			for channel, obj in discovery.cache.items()
 			if not channel.endswith(".provider") and provider in obj.get_providers()
 		])

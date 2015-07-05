@@ -104,6 +104,34 @@ class Channels:
 		return discovery.cache[channel].enabled if channel in discovery.cache and not channel.endswith(".provider") else False
 	
 	@channels.actions.action(
+		root_required=True,
+		polkit_privilege="org.semplicelinux.channels.enable-component",
+		command="enable-component",
+		help="Enables a channel component",
+		in_signature="ss",
+	)
+	def EnableComponent(self, channel, component):
+		"""
+		Enables a channel component.
+		"""
+		
+		return actions.enable_component(channel, component)
+
+	@channels.actions.action(
+		root_required=True,
+		polkit_privilege="org.semplicelinux.channels.disable-component",
+		command="disable-component",
+		help="Disables a channel component",
+		in_signature="ss",
+	)
+	def DisableComponent(self, channel, component):
+		"""
+		Enables a channel component.
+		"""
+		
+		return actions.disable_component(channel, component)
+
+	@channels.actions.action(
 		command="get-component-enabled",
 		help="Prints \"True\" if the given component of the channel is enabled, \"False\" otherwise",
 		cli_output="print",

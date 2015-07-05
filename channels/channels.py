@@ -42,25 +42,6 @@ class Channels:
 		
 		pass
 
-	@dbus.service.method(
-		"org.semplicelinux.usersd.group",
-		out_signature="a{i(s)}",
-		sender_keyword="sender",
-		connection_keyword="connection"
-	)
-	def GetGroups(self, sender, connection):
-		"""
-		This method returns a dictionary containing every group's GID as keys,
-		and the groupname as values.
-		"""
-		
-		result = {}
-					
-		for group, obj in self._groups.items():
-			result[obj.gid] = (group,)
-		
-		return result
-
 	@channels.actions.action(
 		root_required=True,
 		polkit_privilege="org.semplicelinux.channels.enable-channel",

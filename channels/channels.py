@@ -150,7 +150,8 @@ class Channels:
 			component if CURRENT_HANDLER == "DBus" else (
 				"%s%s" % (component, " (enabled)" if discovery.cache[channel].is_component_enabled(component) else "")
 			)
-			for component in discovery.cache[channel]
+			for component in discovery.cache[channel].sections()
+			if not component == "channel"
 		])
 	
 	@channels.actions.action(

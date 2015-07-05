@@ -63,6 +63,7 @@ class Channels:
 
 	@channels.actions.action(
 		root_required=True,
+		polkit_privilege="org.semplicelinux.channels.enable-channel",
 		command="enable",
 		help="Enables a channel",
 		in_signature="s"
@@ -76,6 +77,7 @@ class Channels:
 	
 	@channels.actions.action(
 		root_required=True,
+		polkit_privilege="org.semplicelinux.channels.disable-channel",
 		command="disable",
 		help="Disables a channel",
 		in_signature="s"

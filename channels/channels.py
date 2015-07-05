@@ -118,6 +118,42 @@ class Channels:
 		return discovery.cache[channel].is_component_enabled(component) if channel in discovery.cache else False
 	
 	@channels.actions.action(
+		command="has-component",
+		help="Prints \"True\" if the channel component exists, \"False\" if not",
+		cli_output="print",
+		in_signature="ss",
+		out_signature="b"
+	)
+	def HasComponent(self, channel, component):
+		"""
+		Returns True if the channel component exists, False if not.
+		"""
+		
+		return discovery.cache[channel].has_component(component) if channel in discovery.cache else False
+	
+	@channels.actions.action(
+		command="list-components",
+		help="Lists every component of the given channel",
+		cli_output="newline",
+		in_signature="s",
+		out_signature="as"
+	)
+	def ListComponents(self, channel):
+		"""
+		Lists every component of the given channel.
+		"""
+		
+		if not channel in discovery.cache or channel.endswith(".provider"):
+			return []
+
+		return sorted([
+			component if CURRENT_HANDLER == "DBus" else (
+				"%s%s" % (component, " (enabled)" if discovery.cache[channel].is_component_enabled(component) else "")
+			)
+			for component in discovery.cache[channel]
+		])
+	
+	@channels.actions.action(
 		command="get-details",
 		help="Returns the requested details.",
 		cli_output="keyvalue",

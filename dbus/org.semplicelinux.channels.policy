@@ -16,9 +16,9 @@
                 </defaults>
                 <annotate key="org.freedesktop.policykit.imply">
                     org.semplicelinux.channels.enable-channel
-                    org.semplicelinux.usersd.disable-channel
-                    org.semplicelinux.usersd.enable-component
-                    org.semplicelinux.usersd.disable-component
+                    org.semplicelinux.channels.disable-channel
+                    org.semplicelinux.channels.enable-component
+                    org.semplicelinux.channels.disable-component
                 </annotate>
         </action>
 
@@ -32,7 +32,7 @@
                 </defaults>
         </action>
         
-        <action id="org.semplicelinux.usersd.disable-channel">
+        <action id="org.semplicelinux.channels.disable-channel">
                 <description>Disable channel</description>
                 <message>Authentication is required to disable the channel.</message>
                 <defaults>
@@ -42,7 +42,7 @@
                 </defaults>
         </action>
 
-        <action id="org.semplicelinux.usersd.enable-component">
+        <action id="org.semplicelinux.channels.enable-component">
                 <description>Enable channel component</description>
                 <message>Authentication is required to enable the channel component.</message>
                 <defaults>
@@ -52,7 +52,7 @@
                 </defaults>
         </action>
 
-        <action id="org.semplicelinux.usersd.disable-component">
+        <action id="org.semplicelinux.channels.disable-component">
                 <description>Disable channel component</description>
                 <message>Authentication is required to disable the channel component.</message>
                 <defaults>

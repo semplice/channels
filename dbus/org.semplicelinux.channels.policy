@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+        "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+
+        <vendor>Semplice Linux</vendor>
+        <vendor_url>http://semplice-linux.org</vendor_url>
+
+        <action id="org.semplicelinux.channels.manage">
+                <description>Manage channels</description>
+                <message>Authentication is required to manage channels.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>auth_admin_keep</allow_active>
+                </defaults>
+                <annotate key="org.freedesktop.policykit.imply">
+                    org.semplicelinux.channels.enable-channel
+                    org.semplicelinux.usersd.disable-channel
+                    org.semplicelinux.usersd.enable-component
+                    org.semplicelinux.usersd.disable-component
+                </annotate>
+        </action>
+
+        <action id="org.semplicelinux.channels.enable-channel">
+                <description>Enable channel</description>
+                <message>Authentication is required to enable the channel.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>auth_admin_keep</allow_active>
+                </defaults>
+        </action>
+        
+        <action id="org.semplicelinux.usersd.disable-channel">
+                <description>Disable channel</description>
+                <message>Authentication is required to disable the channel.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>auth_admin_keep</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.usersd.enable-component">
+                <description>Enable channel component</description>
+                <message>Authentication is required to enable the channel component.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>auth_admin_keep</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.usersd.disable-component">
+                <description>Disable channel component</description>
+                <message>Authentication is required to disable the channel component.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>auth_admin_keep</allow_active>
+                </defaults>
+        </action>
+
+</policyconfig>

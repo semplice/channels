@@ -115,15 +115,26 @@ def action(
 				# Check for root
 				if not os.geteuid() == 0:
 					error("This action is available only for privileged users.")
-			elif CURRENT_HANDLER == "DBus" and polkit_privilege and not is_authorized(
-				# We assume that both the sender and the connection are in kwargs
-				kwargs["sender"],
-				kwargs["connection"],
-				polkit_privilege,
-				True # user interaction
-			):
-				# No way
-				raise Exception("Not authorized")
+			elif CURRENT_HANDLER == "DBus" and polkit_privilege:
+				
+				if not is_authorized(
+					# We assume that both the sender and the connection are in kwargs
+					kwargs["sender"],
+					kwargs["connection"],
+					polkit_privilege,
+					True # user interaction
+				):
+					# No way
+					raise Exception("Not authorized")
+				
+				# This is weird. Sender and connection are in kwargs BUT
+				# we expect them in args. This makes the DBus call fail
+				# due to varnames clashes.
+				# We workaround this by putting sender and connection at the end of args,
+				# and by deleting them from the kwargs.
+				args = list(args) + [kwargs["sender"], kwargs["connection"]]
+				del kwargs["sender"]
+				del kwargs["connection"]
 			
 			result = obj(*args, **kwargs)
 			

@@ -39,9 +39,6 @@ class Channels:
 		Initializes the class.
 		"""
 		
-		# This is volountairly left blank because otherwise a possible
-		# __init__ from another class may take over when creating a mix-in.
-		
 		self.lock = Lock()
 
 	@channels.actions.action(

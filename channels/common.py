@@ -46,7 +46,7 @@ def error(message, exit=1):
 	Prints an error message, and exits (if exit != None).
 	"""
 	
-	print("%s: error: %s" % (sys.argv[0], message), file=sys.stderr)
+	sys.stderr.write("%s: error: %s\n" % (sys.argv[0], message))
 	if exit != None:
 		sys.exit(exit)
 

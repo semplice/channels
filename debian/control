@@ -1,0 +1,21 @@
+Source: channels
+Section: admin
+Priority: optional
+Maintainer: Eugenio Paolantonio (g7) <me@medesimo.eu>
+Build-Depends: dh-python, python3-all (>= 3.1.2-7~), debhelper (>= 8.0.0)
+X-Python3-Version: >= 3.4
+Standards-Version: 3.9.5
+Homepage: https://github.com/semplice/channels
+Vcs-Git: git://github.com/semplice/channels.git
+Vcs-Browser: https://github.com/semplice/channels
+
+Package: channels
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-gi, gir1.2-glib-2.0,
+ ${python:Depends}, python3-dbus, gir1.2-polkit-1.0, python3-libchannels
+Breaks: ${python3:Breaks}
+Description: Channel support -- cli & dbus frontends
+ channels is a tool that permits to easily manage update channels on
+ Semplice.
+ .
+ This package contains the command line and dbus frontends to libchannels.

@@ -22,6 +22,8 @@
 import dbus.service
 from channels.objects import BaseObject
 
+from threading import Lock
+
 from channels.common import CURRENT_HANDLER, discovery, actions
 
 import channels.actions
@@ -40,7 +42,7 @@ class Channels:
 		# This is volountairly left blank because otherwise a possible
 		# __init__ from another class may take over when creating a mix-in.
 		
-		pass
+		self.lock = Lock()
 
 	@channels.actions.action(
 		root_required=True,
@@ -54,7 +56,11 @@ class Channels:
 		Enables a channel.
 		"""
 		
-		return actions.enable_channel(channel)
+		self.lock.acquire()
+		result = actions.enable_channel(channel)
+		self.lock.release()
+		
+		return result
 	
 	@channels.actions.action(
 		root_required=True,
@@ -68,7 +74,11 @@ class Channels:
 		Disables a channel.
 		"""
 		
-		return actions.disable_channel(channel)
+		self.lock.acquire()
+		result = actions.disable_channel(channel)
+		self.lock.release()
+		
+		return result
 	
 	@channels.actions.action(
 		command="list",
@@ -115,7 +125,11 @@ class Channels:
 		Enables a channel component.
 		"""
 		
-		return actions.enable_component(channel, component)
+		self.lock.acquire()
+		result = actions.enable_component(channel, component)
+		self.lock.release()
+		
+		return result
 
 	@channels.actions.action(
 		root_required=True,
@@ -129,7 +143,11 @@ class Channels:
 		Enables a channel component.
 		"""
 		
-		return actions.disable_component(channel, component)
+		self.lock.acquire()
+		result = actions.disable_component(channel, component)
+		self.lock.release()
+		
+		return result
 
 	@channels.actions.action(
 		command="get-component-enabled",

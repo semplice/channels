@@ -24,11 +24,41 @@ from channels.common import CURRENT_HANDLER, error
 if CURRENT_HANDLER == "DBus":
 	from channels.objects import BaseObject
 	from channels.dbus_common import is_authorized
+	import dbus.service
 	outside_timeout = BaseObject.outside_timeout
 
 import os
 
 import types
+
+def signal(
+	signature=None
+):
+	
+	"""
+	Handles a DBus signal.
+	If CURRENT_HANDLER != "DBus", the decorated method won't be available.
+	"""
+	
+	def decorator(obj):
+		"""
+		Modifies the object.
+		"""
+		
+		if CURRENT_HANDLER != "DBus":
+			return None
+
+		obj = dbus.service.signal(
+			"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
+			signature=signature
+		)(obj)
+		
+		# This is needed to make the signal detectable by common.get_class_actions()
+		obj.__actionargs__ = []
+		
+		return obj
+	
+	return decorator
 
 def action(
 	root_required=False, # True to require additional privilegies

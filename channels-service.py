@@ -61,7 +61,10 @@ class Service(channels.objects.BaseObject):
 			self._namespaces[module] = type(
 				module,
 				(mod, channels.objects.BaseObject),
-				dict(path="/org/semplicelinux/channels/%s" % module)
+				dict(
+					path="/org/semplicelinux/channels/%s" % module,
+					interface_name="org.semplicelinux.channels.%s" % module
+				)
 			)()
 			# Perhaps super() is better?
 			channels.objects.BaseObject.__init__(self._namespaces[module], self.bus_name)

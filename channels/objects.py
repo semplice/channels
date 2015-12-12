@@ -140,7 +140,7 @@ class BaseObject(dbus.service.Object):
 			
 			for prop in self.export_properties:
 				try:
-					result[prop.capitalize()] = getattr(self, prop)
+					result[prop[0].upper() + prop[1:]] = getattr(self, prop)
 				except:
 					pass
 			

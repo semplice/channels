@@ -21,13 +21,20 @@
 
 from types import FunctionType
 
+import os
+
 import sys
 
+import shutil
+
 import importlib
+
+import threading
 
 import libchannels.discovery
 import libchannels.resolver
 import libchannels.actions
+import libchannels.updates
 
 CURRENT_HANDLER = None
 
@@ -40,6 +47,64 @@ resolver = libchannels.resolver.DependencyResolver(discovery.cache)
 
 # Actions
 actions = libchannels.actions.Actions(discovery, resolver)
+
+# Updates
+updates = libchannels.updates.Updates()
+
+def create_rotated_log(logfile, maximum=5):
+	"""
+	Creates a rotated log file and returns its file descriptor.
+	
+	This is a pretty simple routine, which doesn't perform size-checks
+	like logging's handler does.
+	
+	Note: the containing directory must be already present.
+	
+	`logfile` is the full log file path.
+	"""
+	
+	# Remove the most older file, if present
+	older = logfile + ".%s" % maximum
+	if os.path.exists(older):
+		os.remove(older)
+	
+	# Now rotate everything else
+	for i in range(maximum-1, -1, -1):
+		log = logfile + ".%s" % i if not i == 0 else logfile
+		if os.path.exists(log):
+			shutil.move(log, logfile + ".%s" % (i+1))
+	
+	# Finally create the descriptor and return it
+	return os.open(logfile, os.O_RDWR | os.O_CREAT)
+
+def thread():
+	
+	"""
+	Function decorator that ease the creation of threaded methods.
+	"""
+	
+	def decorator(obj):
+		"""
+		Modifies the object.
+		"""
+		
+		if not obj:
+			return None
+		
+		def wrapper(*args, **kwargs):
+			"""
+			The function wrapper.
+			"""
+			
+			threading.Thread(target=obj, args=args, kwargs=kwargs).start()
+		
+		# Merge metadata
+		wrapper.__name__ = obj.__name__
+		wrapper.__dict__.update(obj.__dict__)
+		
+		return wrapper if not CURRENT_HANDLER == "cli" else obj
+	
+	return decorator
 
 def error(message, exit=1):
 	"""
@@ -66,12 +131,12 @@ def load_module(name):
 	
 	return getattr(importlib.import_module("channels.%s" % name), name.capitalize())
 
-def get_class_actions(clss):
+def get_class_actions(clss, with_internals=True):
 	"""
 	Returns a list of available actions in the given class.
 	"""
 	
 	return [
 		y for x, y in clss.__dict__.items()
-		if type(y) == FunctionType and not x.startswith("_") and hasattr(y, "__actionargs__")
+		if type(y) == FunctionType and not x.startswith("_") and hasattr(y, "__actionargs__") and (not with_internals and not getattr(y, "__internal__") or with_internals)
 	]

@@ -27,9 +27,13 @@ if CURRENT_HANDLER == "DBus":
 	import dbus.service
 	outside_timeout = BaseObject.outside_timeout
 
+import logging
+
 import os
 
 import types
+
+logger = logging.getLogger(__name__)
 
 def signal(
 	signature=None
@@ -52,11 +56,26 @@ def signal(
 			"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 			signature=signature
 		)(obj)
-		
+
+		def wrapper(*args, **kwargs):
+			"""
+			Signal wrapper.
+			"""
+			
+			logger.debug("%s: %s, %s" % (obj.__name__, args[1:], kwargs))
+			return obj(*args, **kwargs)
+
+		# Merge metadata
+		wrapper.__name__ = obj.__name__
+		wrapper.__dict__.update(obj.__dict__)
+
 		# This is needed to make the signal detectable by common.get_class_actions()
-		obj.__actionargs__ = []
+		wrapper.__actionargs__ = []
 		
-		return obj
+		# Signals can't be internal
+		wrapper.__internal__ = False
+		
+		return wrapper
 	
 	return decorator
 
@@ -65,6 +84,7 @@ def action(
 	polkit_privilege=None, # Privilege to be asked for when on DBus and root_required == True
 	dbus_visible=True, # False to hide on DBus
 	command=None, # None disables the method on cli handler
+	internal=False, # True makes sure that the method is visible internally
 	help=None, # Help for the cli handler
 	cli_output=None, # How to parse the output on the cli handler ("newline", "print", None)
 	cli_group_last=False, # If True, the remaining args will be grouped in one (like *args does)
@@ -122,12 +142,12 @@ def action(
 		if (
 			(CURRENT_HANDLER == "DBus" and not dbus_visible) or
 			(CURRENT_HANDLER == "cli" and not command)
-		):
+		) and not internal:
 			# Should hide
 			return None
 		
 		# Wrap around outside_timeout if on DBus
-		if CURRENT_HANDLER == "DBus":
+		if CURRENT_HANDLER == "DBus" and dbus_visible:
 			obj = outside_timeout(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,
@@ -177,7 +197,7 @@ def action(
 			
 			result = obj(*args, **kwargs)
 			
-			if CURRENT_HANDLER == "cli" and result != None:
+			if CURRENT_HANDLER == "cli" and result != None and not (not command and internal):
 				if cli_output == "print":
 					print(result)
 				elif cli_output == "newline":
@@ -197,6 +217,7 @@ def action(
 
 		wrapper.__grouplast__ = cli_group_last
 		wrapper.__command__ = command
+		wrapper.__internal__ = internal
 		wrapper.__commandhelp__ = help
 		
 		return wrapper

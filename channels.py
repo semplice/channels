@@ -38,7 +38,7 @@ def show_actions():
 	for module in channels.__all__:
 		mod = channels.common.load_module(module)
 		
-		actions[module] = [(x.__command__, x.__actionargs__, x.__commandhelp__) for x in channels.common.get_class_actions(mod)]
+		actions[module] = [(x.__command__, x.__actionargs__, x.__commandhelp__) for x in channels.common.get_class_actions(mod, with_internals=False)]
 	
 	print("""Available actions:
 
@@ -74,7 +74,7 @@ def execute_action(info):
 	# Search for the action
 	for module in channels.__all__:
 		mod = channels.common.load_module(module)()
-		members = {x.__command__:x for x in channels.common.get_class_actions(mod.__class__)}
+		members = {x.__command__:x for x in channels.common.get_class_actions(mod.__class__, with_internals=False)}
 		
 		if info[0] in members:
 			x = members[info[0]]

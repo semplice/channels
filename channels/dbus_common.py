@@ -21,6 +21,8 @@
 
 import dbus
 
+import threading
+
 from gi.repository import GLib, Polkit
 
 authority = Polkit.Authority.get_sync()
@@ -39,6 +41,7 @@ class LoopWithTimeout():
 		
 		self.loop = GLib.MainLoop()
 		
+		self.timeout = 0
 		self.timeout_length = timeout_length
 		
 		self.add_timeout()
@@ -47,6 +50,10 @@ class LoopWithTimeout():
 		"""
 		Fired when the timeout elapsed.
 		"""
+		
+		if len(threading.enumerate()) > 1:
+			# Threads still running, delay the timeout
+			return True
 		
 		self.quit()
 		
@@ -67,7 +74,8 @@ class LoopWithTimeout():
 		Timeout.
 		"""
 		
-		self.timeout = GLib.timeout_add_seconds(self.timeout_length, self.on_timeout_elapsed)
+		if not self.timeout:
+			self.timeout = GLib.timeout_add_seconds(self.timeout_length, self.on_timeout_elapsed)
 	
 	def __getattr__(self, name):
 		"""

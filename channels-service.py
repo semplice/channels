@@ -37,9 +37,7 @@ import channels
 import channels.common
 import channels.objects
 
-from channels.dbus_common import MainLoop, is_authorized
-
-from dbus.mainloop.glib import DBusGMainLoop
+from channels.dbus_common import MainLoop, BUS, is_authorized
 
 LOGPATH = "/var/log/channels/channels.log"
 
@@ -62,7 +60,7 @@ class Service(channels.objects.BaseObject):
 		
 		self.bus_name = dbus.service.BusName(
 			"org.semplicelinux.channels",
-			bus=dbus.SystemBus()
+			bus=BUS
 		)
 		
 		super().__init__(self.bus_name)
@@ -138,7 +136,6 @@ if __name__ == "__main__":
 	logger.addHandler(stream_handler)
 
 	logger.info("Starting-up the service...")
-	DBusGMainLoop(set_as_default=True)
 	clss = Service()
 	
 	# Ladies and gentlemen...

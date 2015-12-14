@@ -23,9 +23,18 @@ import dbus
 
 import threading
 
+import logging
+
 from gi.repository import GLib, Polkit
 
+from dbus.mainloop.glib import DBusGMainLoop
+
 authority = Polkit.Authority.get_sync()
+
+logger = logging.getLogger(__name__)
+
+DBusGMainLoop(set_as_default=True)
+BUS = dbus.SystemBus()
 
 class LoopWithTimeout():
 	"""
@@ -41,18 +50,66 @@ class LoopWithTimeout():
 		
 		self.loop = GLib.MainLoop()
 		
+		self.connected_clients = []
+		
 		self.timeout = 0
 		self.timeout_length = timeout_length
 		
 		self.add_timeout()
+	
+	def add_client(self, client):
+		"""
+		Adds a client to the connected_clients.
+		"""
+		
+		logger.debug("Client %s connected" % client)
+		self.connected_clients.append(client)
+		
+		# Subscribe to changes
+		BUS.add_signal_receiver(
+			handler_function=self.on_name_owner_changed,
+			signal_name="NameOwnerChanged",
+			dbus_interface="org.freedesktop.DBus",
+			path="/org/freedesktop/DBus",
+			arg0=client
+		)
+
+	def on_name_owner_changed(self, name, old_owner, new_owner):
+		"""
+		A callback for NameOwnerChanged that can be hooked on the bus.
+		
+		This callback is reponsible to update the self.connected_clients
+		list so that the MainLoop stays aware of the connected clients.
+		
+		Note that this method doesn't do any filtering.
+		"""
+		
+		if not name.startswith(":") or new_owner:
+			# Us or new_owner (wtf), discard
+			return
+		
+		if name in self.connected_clients:
+			# Client disconnection
+			logger.debug("Client %s disconnected" % name)
+			self.connected_clients.remove(name)
+			
+			# Unsubscribe to changes
+			BUS.remove_signal_receiver(
+				handler_or_match=self.on_name_owner_changed,
+				signal_name="NameOwnerChanged",
+				dbus_interface="org.freedesktop.DBus",
+				path="/org/freedesktop/DBus",
+				arg0=old_owner
+			)
 
 	def on_timeout_elapsed(self):
 		"""
 		Fired when the timeout elapsed.
 		"""
 		
-		if len(threading.enumerate()) > 1:
-			# Threads still running, delay the timeout
+		if len(threading.enumerate()) > 1 or self.connected_clients:
+			# Threads still running or there still are connected clients,
+			# delay the timeout
 			return True
 		
 		self.quit()

@@ -168,7 +168,7 @@ def is_authorized(sender, connection, privilege, user_interaction=True):
 	
 	# Get PID
 	pid = dbus.Interface(
-		dbus.SystemBus().get_object(
+		BUS.get_object(
 			"org.freedesktop.DBus",
 			"/org/freedesktop/DBus"
 		),

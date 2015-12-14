@@ -114,7 +114,7 @@ def action(
 			types.CodeType(
 				obj.__code__.co_argcount + 2, # argcount of obj + sender and connection
 				obj.__code__.co_kwonlyargcount,
-				obj.__code__.co_nlocals,
+				obj.__code__.co_nlocals + 2,
 				obj.__code__.co_stacksize,
 				obj.__code__.co_flags,
 				obj.__code__.co_code,
@@ -152,9 +152,9 @@ def action(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,
 				out_signature=out_signature,
-				sender_keyword="sender" if polkit_privilege else None,
-				connection_keyword="connection" if polkit_privilege else None
-			)(create_dbus_fixed_method(obj) if polkit_privilege else obj)
+				sender_keyword="sender",
+				connection_keyword="connection"
+			)(create_dbus_fixed_method(obj))
 
 		def wrapper(*args, **kwargs):
 			"""
@@ -165,7 +165,7 @@ def action(
 				# Check for root
 				if not os.geteuid() == 0:
 					error("This action is available only for privileged users.")
-			elif CURRENT_HANDLER == "DBus" and polkit_privilege:
+			elif CURRENT_HANDLER == "DBus":
 				
 				if "sender" in kwargs and "connection" in kwargs:
 					# If they are not, the method is called from the inside,
@@ -173,27 +173,20 @@ def action(
 					# FIXME: Should investigate more this type of thing
 					# (is it still secure?)
 					
-					if not is_authorized(
-						# We assume that both the sender and the connection are in kwargs
-						kwargs["sender"],
-						kwargs["connection"],
-						polkit_privilege,
-						True # user interaction
-					):
-						# No way
-						raise Exception("Not authorized")
-					
-					# This is weird. Sender and connection are in kwargs BUT
-					# we expect them in args. This makes the DBus call fail
-					# due to varnames clashes.
-					# We workaround this by putting sender and connection at the end of args,
-					# and by deleting them from the kwargs.
-					args = list(args) + [kwargs["sender"], kwargs["connection"]]
-					del kwargs["sender"]
-					del kwargs["connection"]
-				else:
+					if polkit_privilege:
+						if not is_authorized(
+							# We assume that both the sender and the connection are in kwargs
+							kwargs["sender"],
+							kwargs["connection"],
+							polkit_privilege,
+							True # user interaction
+						):
+							# No way
+							raise Exception("Not authorized")
+				elif dbus_visible:
 					# Insert fake sender and connections
-					args = list(args) + [None, None]
+					kwargs["sender"] = None
+					kwargs["connection"] = None
 			
 			result = obj(*args, **kwargs)
 			

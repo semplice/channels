@@ -50,6 +50,9 @@ setup(
 		'threading',
 		'gi.repository.GLib',
 		'gi.repository.Polkit',
+		'apt',
+		'apt_pkg',
+		'logging',
 		'libchannels'
 	]
 )

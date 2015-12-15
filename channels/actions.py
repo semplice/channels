@@ -24,17 +24,67 @@ from channels.common import CURRENT_HANDLER, error
 if CURRENT_HANDLER == "DBus":
 	from channels.objects import BaseObject
 	from channels.dbus_common import is_authorized
+	import dbus.service
 	outside_timeout = BaseObject.outside_timeout
+
+import logging
 
 import os
 
 import types
+
+logger = logging.getLogger(__name__)
+
+def signal(
+	signature=None
+):
+	
+	"""
+	Handles a DBus signal.
+	If CURRENT_HANDLER != "DBus", the decorated method won't be available.
+	"""
+	
+	def decorator(obj):
+		"""
+		Modifies the object.
+		"""
+		
+		if CURRENT_HANDLER != "DBus":
+			return None
+
+		obj = dbus.service.signal(
+			"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
+			signature=signature
+		)(obj)
+
+		def wrapper(*args, **kwargs):
+			"""
+			Signal wrapper.
+			"""
+			
+			logger.debug("%s: %s, %s" % (obj.__name__, args[1:], kwargs))
+			return obj(*args, **kwargs)
+
+		# Merge metadata
+		wrapper.__name__ = obj.__name__
+		wrapper.__dict__.update(obj.__dict__)
+
+		# This is needed to make the signal detectable by common.get_class_actions()
+		wrapper.__actionargs__ = []
+		
+		# Signals can't be internal
+		wrapper.__internal__ = False
+		
+		return wrapper
+	
+	return decorator
 
 def action(
 	root_required=False, # True to require additional privilegies
 	polkit_privilege=None, # Privilege to be asked for when on DBus and root_required == True
 	dbus_visible=True, # False to hide on DBus
 	command=None, # None disables the method on cli handler
+	internal=False, # True makes sure that the method is visible internally
 	help=None, # Help for the cli handler
 	cli_output=None, # How to parse the output on the cli handler ("newline", "print", None)
 	cli_group_last=False, # If True, the remaining args will be grouped in one (like *args does)
@@ -64,7 +114,7 @@ def action(
 			types.CodeType(
 				obj.__code__.co_argcount + 2, # argcount of obj + sender and connection
 				obj.__code__.co_kwonlyargcount,
-				obj.__code__.co_nlocals,
+				obj.__code__.co_nlocals + 2,
 				obj.__code__.co_stacksize,
 				obj.__code__.co_flags,
 				obj.__code__.co_code,
@@ -92,19 +142,19 @@ def action(
 		if (
 			(CURRENT_HANDLER == "DBus" and not dbus_visible) or
 			(CURRENT_HANDLER == "cli" and not command)
-		):
+		) and not internal:
 			# Should hide
 			return None
 		
 		# Wrap around outside_timeout if on DBus
-		if CURRENT_HANDLER == "DBus":
+		if CURRENT_HANDLER == "DBus" and dbus_visible:
 			obj = outside_timeout(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,
 				out_signature=out_signature,
-				sender_keyword="sender" if polkit_privilege else None,
-				connection_keyword="connection" if polkit_privilege else None
-			)(create_dbus_fixed_method(obj) if polkit_privilege else obj)
+				sender_keyword="sender",
+				connection_keyword="connection"
+			)(create_dbus_fixed_method(obj))
 
 		def wrapper(*args, **kwargs):
 			"""
@@ -115,30 +165,32 @@ def action(
 				# Check for root
 				if not os.geteuid() == 0:
 					error("This action is available only for privileged users.")
-			elif CURRENT_HANDLER == "DBus" and polkit_privilege:
+			elif CURRENT_HANDLER == "DBus":
 				
-				if not is_authorized(
-					# We assume that both the sender and the connection are in kwargs
-					kwargs["sender"],
-					kwargs["connection"],
-					polkit_privilege,
-					True # user interaction
-				):
-					# No way
-					raise Exception("Not authorized")
-				
-				# This is weird. Sender and connection are in kwargs BUT
-				# we expect them in args. This makes the DBus call fail
-				# due to varnames clashes.
-				# We workaround this by putting sender and connection at the end of args,
-				# and by deleting them from the kwargs.
-				args = list(args) + [kwargs["sender"], kwargs["connection"]]
-				del kwargs["sender"]
-				del kwargs["connection"]
+				if "sender" in kwargs and "connection" in kwargs:
+					# If they are not, the method is called from the inside,
+					# so do not check auth
+					# FIXME: Should investigate more this type of thing
+					# (is it still secure?)
+					
+					if polkit_privilege:
+						if not is_authorized(
+							# We assume that both the sender and the connection are in kwargs
+							kwargs["sender"],
+							kwargs["connection"],
+							polkit_privilege,
+							True # user interaction
+						):
+							# No way
+							raise Exception("Not authorized")
+				elif dbus_visible:
+					# Insert fake sender and connections
+					kwargs["sender"] = None
+					kwargs["connection"] = None
 			
 			result = obj(*args, **kwargs)
 			
-			if CURRENT_HANDLER == "cli" and result != None:
+			if CURRENT_HANDLER == "cli" and result != None and not (not command and internal):
 				if cli_output == "print":
 					print(result)
 				elif cli_output == "newline":
@@ -158,6 +210,7 @@ def action(
 
 		wrapper.__grouplast__ = cli_group_last
 		wrapper.__command__ = command
+		wrapper.__internal__ = internal
 		wrapper.__commandhelp__ = help
 		
 		return wrapper

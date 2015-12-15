@@ -57,4 +57,54 @@
                 </defaults>
         </action>
 
+        <action id="org.semplicelinux.channels.check-updates">
+                <description>Check for updates</description>
+                <message>Authentication is required to check for updates.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>yes</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.channels.change-package-status">
+                <description>Change package status</description>
+                <message>Authentication is required to change package status.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>yes</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.channels.fetch-updates">
+                <description>Fetch updates</description>
+                <message>Authentication is required to fetch the updates.</message>
+                <defaults>
+                        <allow_any>auth_admin_keep</allow_any>
+                        <allow_inactive>auth_admin_keep</allow_inactive>
+                        <allow_active>yes</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.channels.fetch-install-updates">
+                <description>Fetch and install updates</description>
+                <message>Authentication is required to fetch and install the updates.</message>
+                <defaults>
+                        <allow_any>auth_admin</allow_any>
+                        <allow_inactive>auth_admin</allow_inactive>
+                        <allow_active>auth_admin</allow_active>
+                </defaults>
+        </action>
+
+        <action id="org.semplicelinux.channels.install-updates">
+                <description>Install updates</description>
+                <message>Authentication is required to install the updates.</message>
+                <defaults>
+                        <allow_any>auth_admin</allow_any>
+                        <allow_inactive>auth_admin</allow_inactive>
+                        <allow_active>auth_admin</allow_active>
+                </defaults>
+        </action>
+
 </policyconfig>

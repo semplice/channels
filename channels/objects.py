@@ -78,7 +78,11 @@ class BaseObject(dbus.service.Object):
 			func = dbus.service.method(*args, **kwargs)(func)
 			
 			def wrapper(self, *args, **kwargs):
-													
+				
+				if "sender" in kwargs and not kwargs["sender"] in MainLoop.connected_clients:
+					# Notify the MainLoop of the sender
+					MainLoop.add_client(kwargs["sender"])
+				
 				MainLoop.remove_timeout()
 				result = func(self, *args, **kwargs)
 				MainLoop.add_timeout()
@@ -140,7 +144,7 @@ class BaseObject(dbus.service.Object):
 			
 			for prop in self.export_properties:
 				try:
-					result[prop.capitalize()] = getattr(self, prop)
+					result[prop[0].upper() + prop[1:]] = getattr(self, prop)
 				except:
 					pass
 			

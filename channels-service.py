@@ -22,18 +22,29 @@
 
 import os
 
+os.environ["DEBIAN_FRONTEND"] = "gnome" # FIXME
+
+import sys
+
+import argparse
+
+import logging
+import logging.handlers
+
 import dbus
 
 import channels
 import channels.common
 import channels.objects
 
-from channels.dbus_common import MainLoop, is_authorized
+from channels.dbus_common import MainLoop, BUS, is_authorized
 
-from dbus.mainloop.glib import DBusGMainLoop
+LOGPATH = "/var/log/channels/channels.log"
 
 # Set handler
 channels.common.set_handler("DBus")
+
+logger = logging.getLogger()
 
 class Service(channels.objects.BaseObject):
 	"""
@@ -49,7 +60,7 @@ class Service(channels.objects.BaseObject):
 		
 		self.bus_name = dbus.service.BusName(
 			"org.semplicelinux.channels",
-			bus=dbus.SystemBus()
+			bus=BUS
 		)
 		
 		super().__init__(self.bus_name)
@@ -61,7 +72,10 @@ class Service(channels.objects.BaseObject):
 			self._namespaces[module] = type(
 				module,
 				(mod, channels.objects.BaseObject),
-				dict(path="/org/semplicelinux/channels/%s" % module)
+				dict(
+					path="/org/semplicelinux/channels/%s" % module,
+					interface_name="org.semplicelinux.channels.%s" % module
+				)
 			)()
 			# Perhaps super() is better?
 			channels.objects.BaseObject.__init__(self._namespaces[module], self.bus_name)
@@ -76,8 +90,52 @@ class Service(channels.objects.BaseObject):
 				self._dbus_class_table["__main__.%s" % module]["org.semplicelinux.channels.%s" % module][obj.__name__] = obj
 
 if __name__ == "__main__":
-		
-	DBusGMainLoop(set_as_default=True)
+
+	# No root, no party
+	if os.getuid() != 0:
+		sys.stdout.write("ERROR: channels-service must be run as root.\n")
+		sys.exit(1)
+
+	# Parse arguments
+	parser = argparse.ArgumentParser(description="Update channels management service")
+	parser.add_argument(
+		"-d", "--debug",
+		action="store_true",
+		help="enables debug mode"
+	)
+	args = parser.parse_args()
+
+	# Set-up logging
+	if not os.path.exists("/var/log/channels/"):
+		os.mkdir("/var/log/channels", 0o755)
+	
+	formatter = logging.Formatter(
+		"%(asctime)s %(name)s: [%(levelname)s:%(lineno)d] %(message)s",
+		datefmt="%Y-%m-%d %H:%M:%S"
+	)
+	
+	logger.setLevel(logging.INFO if not args.debug else logging.DEBUG)
+	
+	# Rotated log, in /var/log/channels/channels.log(.X)
+	# Defaults to INFO if debug is not activated.
+	rotation_handler = logging.handlers.RotatingFileHandler(
+		LOGPATH,
+		maxBytes=1024 * 1024,
+		backupCount=5
+	)
+	rotation_handler.setLevel(logging.INFO if not args.debug else logging.DEBUG)
+	rotation_handler.setFormatter(formatter)
+	
+	# Stream log
+	# Defaults to WARNING if debug is not activated
+	stream_handler = logging.StreamHandler()
+	stream_handler.setLevel(logging.WARNING if not args.debug else logging.DEBUG)
+	stream_handler.setFormatter(formatter)
+	
+	logger.addHandler(rotation_handler)
+	logger.addHandler(stream_handler)
+
+	logger.info("Starting-up the service...")
 	clss = Service()
 	
 	# Ladies and gentlemen...

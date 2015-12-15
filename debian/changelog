@@ -1,3 +1,25 @@
+channels (0.70.0-1) unstable; urgency=medium
+
+  * [actions] Added support for DBus signals.
+  * [service] Specify the interface name.
+  * [actions] Do not check authorization for methods called from the inside.
+  * [channels-service] Implement proper logging support.
+  * [objects] Capitalize property names without messing with the case of the entire word
+  * [actions] Support internal actions and properly log signal handlers
+  * [common] Implement new decorator for threads, an helper function to created rotated
+    log files and change get_class_actions() so that it supports the new __internal__ definition.
+  * [channels] Do not pick up internal actions
+  * [dbus_common] Delay MainLoop quit action if there are threads running
+  * [actions] Always require sender and connection on DBus
+  * [dbus_common, objects] Delay timeout if there are clients connected
+  * [dbus_common] is_authorized(): use the shared SystemBus to get the object
+  * [updates] Initial front-end for libchannels' Updates().
+  * [libchannels] Updated to latest libchannels_master
+  * [setup] Updated dependencies.
+  * [packaging] Depend on libchannels >= 0.70.0
+
+ -- Eugenio Paolantonio (g7) <me@medesimo.eu>  Tue, 15 Dec 2015 18:13:14 +0100
+
 channels (0.1.0-1) unstable; urgency=low
 
   * Initial release.

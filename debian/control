@@ -12,7 +12,7 @@ Vcs-Browser: https://github.com/semplice/channels
 Package: channels
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-gi, gir1.2-glib-2.0,
- ${python:Depends}, python3-dbus, gir1.2-polkit-1.0, python3-libchannels
+ ${python:Depends}, python3-dbus, gir1.2-polkit-1.0, python3-libchannels (>= 0.70.0)
 Breaks: ${python3:Breaks}
 Description: Channel support -- cli & dbus frontends
  channels is a tool that permits to easily manage update channels on

@@ -22,5 +22,6 @@
 __all__ = [
 	"channels",
 	"providers",
+	"updates"
 ]
 

@@ -22,6 +22,11 @@
 import channels.common
 from channels.common import CURRENT_HANDLER, updates
 
+if CURRENT_HANDLER == "DBus":
+	from channels.dbus_common import get_user
+else:
+	get_user = lambda x: None
+
 import channels.actions
 
 import apt.progress.base, apt.progress.text
@@ -35,6 +40,8 @@ import shutil
 import math
 
 import logging
+
+import pwd
 
 from apt_pkg import size_to_str
 
@@ -178,6 +185,23 @@ class DBusInstallProgress(apt.progress.base.InstallProgress):
 		self.on_finish = on_finish
 		self.on_progress_changed = on_progress_changed
 		self.on_status_changed = on_status_changed
+		
+		self.display = None
+		self.xauthority = None
+	
+	def queue_display_settings(self, display, uid):
+		"""
+		Queues display settings.
+		"""
+		
+		self.display = display
+		
+		# Get XAUTHORITY
+		try:
+			self.xauthority = os.path.join(pwd.getpwuid(uid).pw_dir, ".Xauthority")
+		except Exception as err:
+			logger.warning("Unable to get Xauthority path: %s" % err)
+			self.xauthority = None
 	
 	def start_update(self):
 		""""
@@ -225,6 +249,20 @@ class DBusInstallProgress(apt.progress.base.InstallProgress):
 		
 		pid = os.fork()
 		if pid == 0:
+			
+			# Set-up required environment variables
+			os.environ["DEBIAN_FRONTEND"]          = "gnome" # FIXME
+			os.environ["APT_LISTCHANGES_FRONTEND"] = "none"
+			os.environ["APT_LISTBUGS_FRONTEND"]    = "none"
+			if self.display:
+				os.environ["DISPLAY"]              = self.display
+				if self.xauthority and os.path.exists(self.xauthority):
+					os.environ["XAUTHORITY"]       = self.xauthority
+				else:
+					logger.warning("%s does not exist!" % self.xauthority)
+			
+			logger.info(os.environ)
+			
 			desc = channels.common.create_rotated_log(APT_LOGFILE)
 			os.dup2(desc, sys.stdout.fileno())
 			os.dup2(desc, sys.stderr.fileno())
@@ -628,15 +666,24 @@ class Updates:
 		root_required=True,
 		polkit_privilege="org.semplicelinux.channels.fetch-install-updates",
 		command="updates-fetch-install",
-		help="Fetches and installs the updates."
+		help="Fetches and installs the updates.",
+		in_signature="s",
+		cli_ignore=["display"]
 	)
-	def FetchInstall(self):
+	def FetchInstall(self, display, sender):
 		"""
 		Fetches the updates.
 		"""
 
 		if CURRENT_HANDLER == "cli":
 			self.CheckUpdates(True, False) # FIXME
+		elif CURRENT_HANDLER == "DBus":
+			# Queue user name and current display where debconf would
+			# look at
+			updates.packages_install_progress.queue_display_settings(
+				display,
+				get_user(sender)
+			)
 
 		if updates.fetch():
 			updates.install() # Do not launch another useless thread
@@ -660,15 +707,24 @@ class Updates:
 		root_required=True,
 		polkit_privilege="org.semplicelinux.channels.install-updates",
 		command="updates-install",
-		help="Installs the updates."
+		help="Installs the updates.",
+		in_signature="s",
+		cli_ignore=["display"]
 	)
-	def Install(self):
+	def Install(self, display, sender):
 		"""
 		Installs the updates.
 		"""
 
 		if CURRENT_HANDLER == "cli":
 			self.CheckUpdates(True, False) # FIXME
+		elif CURRENT_HANDLER == "DBus":
+			# Queue user name and current display where debconf would
+			# look at
+			updates.packages_install_progress.queue_display_settings(
+				display,
+				get_user(sender)
+			)
 
 		print ("INSTALLING")
 		updates.install()

@@ -88,8 +88,11 @@ def action(
 	help=None, # Help for the cli handler
 	cli_output=None, # How to parse the output on the cli handler ("newline", "print", None)
 	cli_group_last=False, # If True, the remaining args will be grouped in one (like *args does)
+	cli_ignore=[], # Ignore the specified arguments on CLI
 	in_signature="", # DBus in_signature
 	out_signature="", # DBus out_signature
+	sender_keyword="sender",
+	connection_keyword="connection"
 ):
 	
 	"""
@@ -97,7 +100,7 @@ def action(
 	the action handler.
 	"""
 	
-	def create_dbus_fixed_method(obj):
+	def create_dbus_fixed_method(obj, add_arguments=None):
 		"""
 		When polkit authentication is required, the is_authorized() method
 		requires both the sender and the connection objects, which aren't specified
@@ -110,17 +113,27 @@ def action(
 		should not attempt to manually verify if the sender is authenticated.
 		"""
 		
+		if not add_arguments:
+			add_arguments=[sender_keyword, connection_keyword]
+		
+		original_list = list(obj.__code__.co_varnames[:obj.__code__.co_argcount])
+		
+		# Remove already present arguments
+		for arg in add_arguments[:]:
+			if arg in original_list:
+				add_arguments.remove(arg)
+		
 		return types.FunctionType(
 			types.CodeType(
-				obj.__code__.co_argcount + 2, # argcount of obj + sender and connection
+				obj.__code__.co_argcount + len(add_arguments), # argcount of obj + sender and connection
 				obj.__code__.co_kwonlyargcount,
-				obj.__code__.co_nlocals + 2,
+				obj.__code__.co_nlocals + len(add_arguments),
 				obj.__code__.co_stacksize,
 				obj.__code__.co_flags,
 				obj.__code__.co_code,
 				obj.__code__.co_consts,
 				obj.__code__.co_names,
-				tuple(list(obj.__code__.co_varnames[:obj.__code__.co_argcount]) + ["sender", "connection"]),
+				tuple(original_list + add_arguments),
 				obj.__code__.co_filename,
 				obj.__code__.co_name,
 				obj.__code__.co_firstlineno,
@@ -152,8 +165,8 @@ def action(
 				"org.semplicelinux.channels.%s" % obj.__module__.split(".")[-1], # Get the interface name from the module name
 				in_signature=in_signature,
 				out_signature=out_signature,
-				sender_keyword="sender",
-				connection_keyword="connection"
+				sender_keyword=sender_keyword,
+				connection_keyword=connection_keyword
 			)(create_dbus_fixed_method(obj))
 
 		def wrapper(*args, **kwargs):
@@ -165,28 +178,34 @@ def action(
 				# Check for root
 				if not os.geteuid() == 0:
 					error("This action is available only for privileged users.")
-			elif CURRENT_HANDLER == "DBus":
+			elif CURRENT_HANDLER == "DBus" and polkit_privilege:
 				
-				if "sender" in kwargs and "connection" in kwargs:
+				if sender_keyword in kwargs and connection_keyword in kwargs:
 					# If they are not, the method is called from the inside,
 					# so do not check auth
 					# FIXME: Should investigate more this type of thing
 					# (is it still secure?)
 					
-					if polkit_privilege:
-						if not is_authorized(
-							# We assume that both the sender and the connection are in kwargs
-							kwargs["sender"],
-							kwargs["connection"],
-							polkit_privilege,
-							True # user interaction
-						):
-							# No way
-							raise Exception("Not authorized")
-				elif dbus_visible:
+					if not is_authorized(
+						# We assume that both the sender and the connection are in kwargs
+						kwargs[sender_keyword],
+						kwargs[connection_keyword],
+						polkit_privilege,
+						True # user interaction
+					):
+						# No way
+						raise Exception("Not authorized")
+				else:
 					# Insert fake sender and connections
-					kwargs["sender"] = None
-					kwargs["connection"] = None
+					kwargs[sender_keyword] = None
+					kwargs[connection_keyword] = None
+			
+			# Preset with None arguments we should ignore on CLI
+			if CURRENT_HANDLER == "cli":
+				original_list = obj.__code__.co_varnames[:obj.__code__.co_argcount]
+				for arg in cli_ignore + [sender_keyword, connection_keyword]:
+					if arg in original_list:
+						kwargs[arg] = None
 			
 			result = obj(*args, **kwargs)
 			
@@ -206,7 +225,7 @@ def action(
 		wrapper.__dict__.update(obj.__dict__)
 
 		# This should work only on CPython
-		wrapper.__actionargs__ = [x for x in obj.__code__.co_varnames[:obj.__code__.co_argcount] if not x in ["self", "sender", "connection"]]
+		wrapper.__actionargs__ = [x for x in obj.__code__.co_varnames[:obj.__code__.co_argcount] if not x in ["self", sender_keyword, connection_keyword] + cli_ignore]
 
 		wrapper.__grouplast__ = cli_group_last
 		wrapper.__command__ = command

@@ -22,7 +22,7 @@
 
 import os
 
-os.environ["DEBIAN_FRONTEND"] = "gnome" # FIXME
+os.environ["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 import sys
 

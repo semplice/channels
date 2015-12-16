@@ -24,7 +24,7 @@ from distutils.core import setup
 
 setup(
 	name='channels',
-	version='0.70.0',
+	version='0.70.1',
 	description='Update channels management front-end',
 	author='Eugenio Paolantonio',
 	author_email='me@medesimo.eu',

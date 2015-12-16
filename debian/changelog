@@ -1,3 +1,13 @@
+channels (0.70.1-1) unstable; urgency=medium
+
+  * [libchannels] Updated to latest master (for real)
+  * [channels-service] Specify PATH as DBus runs on a limited env
+  * [actions] Changes in how sender and connection keywords are handled
+  * [updates] Properly populate required environment variables
+  * [libchannels_master] Updated to latest master
+
+ -- Eugenio Paolantonio (g7) <me@medesimo.eu>  Wed, 16 Dec 2015 19:32:43 +0100
+
 channels (0.70.0-1) unstable; urgency=medium
 
   * [actions] Added support for DBus signals.

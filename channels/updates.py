@@ -652,8 +652,6 @@ class Updates:
 			# FIXME: Should handle them
 			pass
 		
-		# Re-open cache
-		updates.open_cache()
 		
 		self.cache_operation_lock.release()
 	

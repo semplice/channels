@@ -1,3 +1,10 @@
+channels (0.70.2-1) unstable; urgency=medium
+
+  * [updates] Better package marking failure handling
+  * [libchannels_master] Updated to latest master
+
+ -- Eugenio Paolantonio (g7) <me@medesimo.eu>  Thu, 17 Dec 2015 13:39:30 +0100
+
 channels (0.70.1-1) unstable; urgency=medium
 
   * [libchannels] Updated to latest master (for real)

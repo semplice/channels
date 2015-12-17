@@ -281,10 +281,12 @@ class Updates:
 		"downloading",
 		"installing",
 		"cacheOpening",
+		"cacheFailure",
 		"CurrentDownloadRate",
 		"CurrentDownloadETA",
 	]
 	
+	cacheFailure = False
 	cacheOpening = False
 	refreshing = False
 	checking = False
@@ -537,7 +539,17 @@ class Updates:
 		Signal emitted when the update check process started.
 		"""
 		
+		self.cacheFailure = False
 		self.checking = True
+	
+	@channels.actions.signal()
+	def UpdateCheckFailed(self):
+		"""
+		Signal emitted when the update check process failed.
+		"""
+		
+		self.cacheFailure = True
+		self.checking = False
 	
 	@channels.actions.signal()
 	def UpdateCheckStopped(self):
@@ -545,6 +557,7 @@ class Updates:
 		Signal emitted when the update check process finished.
 		"""
 		
+		self.cacheFailure = False
 		self.checking = False
 	
 	@channels.actions.signal()
@@ -765,7 +778,9 @@ class Updates:
 
 		if not updates.changed or force:
 			if not updates.mark_for_upgrade(dist_upgrade):
-				# FIXME
+				if CURRENT_HANDLER == "DBus":
+					self.UpdateCheckFailed()
+					self.cache_operation_lock.release()
 				return
 		
 		if CURRENT_HANDLER == "DBus":

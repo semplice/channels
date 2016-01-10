@@ -24,6 +24,7 @@ from channels.common import CURRENT_HANDLER, error
 if CURRENT_HANDLER == "DBus":
 	from channels.objects import BaseObject
 	from channels.dbus_common import is_authorized
+	from gi.repository import GObject
 	import dbus.service
 	outside_timeout = BaseObject.outside_timeout
 
@@ -63,7 +64,7 @@ def signal(
 			"""
 			
 			logger.debug("%s: %s, %s" % (obj.__name__, args[1:], kwargs))
-			return obj(*args, **kwargs)
+			return GObject.idle_add(obj, *args, **kwargs)
 
 		# Merge metadata
 		wrapper.__name__ = obj.__name__

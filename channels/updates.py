@@ -822,6 +822,9 @@ class Updates:
 		Returns useful update informations.
 		"""
 		
+		if self.cache_operation_lock.locked():
+			return "0B", "0B"
+		
 		self.cache_operation_lock.acquire()
 		
 		required_download, required_space = updates.get_update_infos()
